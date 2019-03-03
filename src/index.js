@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import {camelize} from './lib/String';
-import {makeCancelable} from './lib/cancelablePromise';
+import { camelize } from './lib/String';
+import { makeCancelable } from './lib/cancelablePromise';
 
 const mapStyles = {
   container: {
@@ -19,7 +19,7 @@ const mapStyles = {
   }
 };
 
-const evtNames = [
+const eventNames = [
   'ready',
   'click',
   'dragend',
@@ -42,13 +42,13 @@ const evtNames = [
   'zoom_changed'
 ];
 
-export {wrapper as GoogleApiWrapper} from './GoogleApiComponent';
-export {Marker} from './components/Marker';
-export {InfoWindow} from './components/InfoWindow';
-export {HeatMap} from './components/HeatMap';
-export {Polygon} from './components/Polygon';
-export {Polyline} from './components/Polyline';
-export {Circle} from './components/Circle';
+export { wrapper as GoogleApiWrapper } from './GoogleApiComponent';
+export { default as Marker } from './components/Marker';
+export { default as InfoWindow } from './components/InfoWindow';
+export { default as HeatMap } from './components/HeatMap';
+export { default as Polygon } from './components/Polygon';
+export { default as Polyline } from './components/Polyline';
+export { default as Circle } from './components/Circle';
 
 export class Map extends React.Component {
   constructor(props) {
@@ -58,6 +58,7 @@ export class Map extends React.Component {
       throw new Error('You must include a `google` prop');
     }
 
+    this.mapRef = createRef();
     this.listeners = {};
     this.state = {
       currentLocation: {
@@ -116,7 +117,7 @@ export class Map extends React.Component {
   }
 
   componentWillUnmount() {
-    const {google} = this.props;
+    const { google } = this.props;
     if (this.geoPromise) {
       this.geoPromise.cancel();
     }
@@ -127,47 +128,42 @@ export class Map extends React.Component {
 
   loadMap() {
     if (this.props && this.props.google) {
-      const {google} = this.props;
+      const { google } = this.props;
       const maps = google.maps;
-
-      const mapRef = this.refs.map;
-      const node = ReactDOM.findDOMNode(mapRef);
+      const node = this.mapRef.current;
       const curr = this.state.currentLocation;
       const center = new maps.LatLng(curr.lat, curr.lng);
 
       const mapTypeIds = this.props.google.maps.MapTypeId || {};
       const mapTypeFromProps = String(this.props.mapType).toUpperCase();
 
-      const mapConfig = Object.assign(
-        {},
-        {
-          mapTypeId: mapTypeIds[mapTypeFromProps],
-          center: center,
-          zoom: this.props.zoom,
-          maxZoom: this.props.maxZoom,
-          minZoom: this.props.minZoom,
-          clickableIcons: !!this.props.clickableIcons,
-          disableDefaultUI: this.props.disableDefaultUI,
-          zoomControl: this.props.zoomControl,
-          zoomControlOptions: this.props.zoomControlOptions,
-          mapTypeControl: this.props.mapTypeControl,
-          mapTypeControlOptions: this.props.mapTypeControlOptions,
-          scaleControl: this.props.scaleControl,
-          streetViewControl: this.props.streetViewControl,
-          streetViewControlOptions: this.props.streetViewControlOptions,
-          panControl: this.props.panControl,
-          rotateControl: this.props.rotateControl,
-          fullscreenControl: this.props.fullscreenControl,
-          scrollwheel: this.props.scrollwheel,
-          draggable: this.props.draggable,
-          draggableCursor: this.props.draggableCursor,
-          keyboardShortcuts: this.props.keyboardShortcuts,
-          disableDoubleClickZoom: this.props.disableDoubleClickZoom,
-          noClear: this.props.noClear,
-          styles: this.props.styles,
-          gestureHandling: this.props.gestureHandling
-        }
-      );
+      const mapConfig = {
+        mapTypeId: mapTypeIds[mapTypeFromProps],
+        center: center,
+        zoom: this.props.zoom,
+        maxZoom: this.props.maxZoom,
+        minZoom: this.props.minZoom,
+        clickableIcons: !!this.props.clickableIcons,
+        disableDefaultUI: this.props.disableDefaultUI,
+        zoomControl: this.props.zoomControl,
+        zoomControlOptions: this.props.zoomControlOptions,
+        mapTypeControl: this.props.mapTypeControl,
+        mapTypeControlOptions: this.props.mapTypeControlOptions,
+        scaleControl: this.props.scaleControl,
+        streetViewControl: this.props.streetViewControl,
+        streetViewControlOptions: this.props.streetViewControlOptions,
+        panControl: this.props.panControl,
+        rotateControl: this.props.rotateControl,
+        fullscreenControl: this.props.fullscreenControl,
+        scrollwheel: this.props.scrollwheel,
+        draggable: this.props.draggable,
+        draggableCursor: this.props.draggableCursor,
+        keyboardShortcuts: this.props.keyboardShortcuts,
+        disableDoubleClickZoom: this.props.disableDoubleClickZoom,
+        noClear: this.props.noClear,
+        styles: this.props.styles,
+        gestureHandling: this.props.gestureHandling
+      };
 
       Object.keys(mapConfig).forEach(key => {
         // Allow to configure mapConfig with 'false'
@@ -178,8 +174,11 @@ export class Map extends React.Component {
 
       this.map = new maps.Map(node, mapConfig);
 
-      evtNames.forEach(e => {
-        this.listeners[e] = this.map.addListener(e, this.handleEvent(e));
+      eventNames.forEach(eventName => {
+        this.listeners[eventName] = this.map.addListener(
+          eventName,
+          this.handleEvent(eventName)
+        );
       });
       maps.event.trigger(this.map, 'ready');
       this.forceUpdate();
@@ -206,7 +205,7 @@ export class Map extends React.Component {
   recenterMap() {
     const map = this.map;
 
-    const {google} = this.props;
+    const { google } = this.props;
 
     if (!google) return;
     const maps = google.maps;
@@ -224,43 +223,37 @@ export class Map extends React.Component {
 
   restyleMap() {
     if (this.map) {
-      const {google} = this.props;
+      const { google } = this.props;
       google.maps.event.trigger(this.map, 'resize');
     }
   }
 
-  renderChildren() {
-    const {children} = this.props;
-
-    if (!children) return;
-
-    return React.Children.map(children, c => {
-      if (!c) return;
-      return React.cloneElement(c, {
-        map: this.map,
-        google: this.props.google,
-        mapCenter: this.state.currentLocation
-      });
-    });
-  }
-
   render() {
-    const style = Object.assign({}, mapStyles.map, this.props.style, {
-      display: this.props.visible ? 'inherit' : 'none'
-    });
-
-    const containerStyles = Object.assign(
-      {},
-      mapStyles.container,
-      this.props.containerStyle
-    );
+    const { children, containerStyle, google, visible } = this.props;
+    const { currentLocation } = this.state;
+    const style = {
+      ...mapStyles.map,
+      ...this.props.style,
+      display: visible ? 'inherit' : 'none'
+    };
+    const containerStyles = {
+      ...mapStyles.container,
+      ...containerStyle
+    };
 
     return (
       <div style={containerStyles} className={this.props.className}>
-        <div style={style} ref="map">
+        <div style={style} ref={this.mapRef}>
           Loading map...
         </div>
-        {this.renderChildren()}
+        {React.Children.map(children, child => (
+          <child.type
+            map={this.map}
+            google={google}
+            mapCenter={currentLocation}
+            {...child.props}
+          />
+        ))}
       </div>
     );
   }
@@ -302,7 +295,7 @@ Map.propTypes = {
   bounds: PropTypes.object
 };
 
-evtNames.forEach(e => (Map.propTypes[camelize(e)] = PropTypes.func));
+eventNames.forEach(e => (Map.propTypes[camelize(e)] = PropTypes.func));
 
 Map.defaultProps = {
   zoom: 14,
