@@ -1,6 +1,6 @@
 {
   "name": "@wuilt/google-maps-react",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Google maps container",
   "author": "Fullstack.io <us@fullstack.io>",
   "license": "MIT",
@@ -19,8 +19,7 @@
   "types": "index.d.ts",
   "scripts": {
     "dev": "NODE_ENV=development ./node_modules/hjs-webpack/bin/hjs-dev-server.js",
-    "build": "NODE_ENV=production webpack",
-    "dist": "./scripts/prepublish.sh",
+    "build": "./scripts/prepublish.sh",
     "publish_pages": "gh-pages -d public/",
     "lint": "eslint ./src",
     "lintfix": "eslint ./src --fix",

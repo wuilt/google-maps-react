@@ -211,12 +211,7 @@
               google: window.google
             });
 
-            return _react2.default.createElement(
-              'div',
-              null,
-              _react2.default.createElement(WrappedComponent, props),
-              _react2.default.createElement('div', { ref: 'map' })
-            );
+            return _react2.default.createElement(WrappedComponent, props);
           }
         }]);
 
