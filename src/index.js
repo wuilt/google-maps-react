@@ -94,6 +94,9 @@ export class Map extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    if (prevProps.mapType !== this.props.mapType) {
+      this.loadMap();
+    }
     if (prevProps.google !== this.props.google) {
       this.loadMap();
     }
